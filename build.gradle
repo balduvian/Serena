@@ -1,7 +1,8 @@
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
-    id 'org.jetbrains.kotlin.jvm' version '1.6.10'
+    id 'org.jetbrains.kotlin.jvm' version '1.8.21'
+    id 'application'
 }
 
 group 'org.balduvian'
@@ -16,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    implementation ("net.dv8tion:JDA:5.0.0-alpha.5") {
+    implementation ("net.dv8tion:JDA:5.0.0-alpha.8") {
         exclude module: 'opus-java'
     }
 }
@@ -38,4 +39,9 @@ compileKotlin {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
+
+application {
+    mainClassName = "BotMainKt"
+    tasks.run.workingDir = "./development"
 }

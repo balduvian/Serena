@@ -1,6 +1,7 @@
 /build
 /.idea
 /.gradle
-/production
+/production/*
+/development/*
 /gradle
 *.iml

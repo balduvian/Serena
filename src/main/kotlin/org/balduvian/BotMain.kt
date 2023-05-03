@@ -1,12 +1,9 @@
 import org.balduvian.Data
-import org.balduvian.EbetDeinoBot
 import org.balduvian.LastDay
-import org.balduvian.TimingManager
+import org.balduvian.Serena
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
-import java.time.LocalDateTime
-import java.util.*
 import kotlin.system.exitProcess
 
 object BotMain {
@@ -20,7 +17,7 @@ object BotMain {
 		exitProcess(-1)
 	}
 
-	val bot: EbetDeinoBot = EbetDeinoBot.createBot(token) ?: run {
+	val bot: Serena = Serena.createBot(token) ?: run {
 		println("Bot could not be created")
 		exitProcess(-1)
 	}
@@ -48,10 +45,13 @@ object BotMain {
 fun main() {
 	BotMain
 
-	val scanner = Scanner(System.`in`)
-
 	while (true) {
-		val input = scanner.nextLine().lowercase()
+		val input = try {
+			readln()
+		} catch (ex: Throwable) {
+			println("Not in a suitable console environment")
+			break
+		}
 
 		if ("quit".startsWith(input)) {
 			println("Bot shutting down...")
