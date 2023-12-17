@@ -3,19 +3,20 @@ package org.balduvian
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
-import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
-import net.dv8tion.jda.api.entities.TextChannel
-import net.dv8tion.jda.api.events.ReadyEvent
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.MemberCachePolicy
 import net.dv8tion.jda.api.utils.cache.CacheFlag
 import java.io.ByteArrayOutputStream
@@ -81,7 +82,7 @@ class Serena(val jda: JDA) : ListenerAdapter() {
 							.setColor(colorInt)
 							.build()
 					)
-						.addFile(byteArrayOutputStream.toByteArray(), filename)
+						.setFiles(FileUpload.fromData(byteArrayOutputStream.toByteArray(), filename))
 						.queue()
 				}, { throwable ->
 					hook.editOriginal(throwable.localizedMessage).queue()
@@ -121,11 +122,9 @@ class Serena(val jda: JDA) : ListenerAdapter() {
 		/* must have an embed */
 		if (reactMessage.embeds.isEmpty()) return
 
-		if (!event.reactionEmote.isEmoji) return
-
 		fun removeReactions() = reactMessage.clearReactions().queue()
 
-		when (event.reactionEmote.emoji) {
+		when (event.emoji.name) {
 			ACCEPT -> {
 				println("Received accept reaction command from ${member.effectiveName}")
 
@@ -318,9 +317,9 @@ class Serena(val jda: JDA) : ListenerAdapter() {
 	}
 
 	fun addCommandReactions(message: Message) {
-		message.addReaction(ACCEPT).queue()
-		message.addReaction(REJECT).queue()
-		message.addReaction(STOP).queue()
+		message.addReaction(Emoji.fromUnicode(ACCEPT)).queue()
+		message.addReaction(Emoji.fromUnicode(REJECT)).queue()
+		message.addReaction(Emoji.fromUnicode(STOP)).queue()
 	}
 
 	fun createEmbed(collection: ArrayList<Message>): MessageEmbed {
@@ -391,7 +390,7 @@ class Serena(val jda: JDA) : ListenerAdapter() {
 	            GatewayIntent.GUILD_PRESENCES,
 	            GatewayIntent.GUILD_MESSAGE_REACTIONS,
 	            GatewayIntent.GUILD_MESSAGE_TYPING,
-	            GatewayIntent.GUILD_EMOJIS,
+	            GatewayIntent.GUILD_EMOJIS_AND_STICKERS,
 	            GatewayIntent.GUILD_VOICE_STATES,
 			).setMemberCachePolicy(MemberCachePolicy.ALL)
 	            .enableCache(CacheFlag.values().asList())

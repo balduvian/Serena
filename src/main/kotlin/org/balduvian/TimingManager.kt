@@ -1,6 +1,6 @@
 package org.balduvian
 
-import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.system.exitProcess
