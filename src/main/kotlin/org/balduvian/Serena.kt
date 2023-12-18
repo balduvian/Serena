@@ -100,11 +100,11 @@ class Serena(val jda: JDA) : ListenerAdapter() {
 
 		if (message == "&&cached") {
 			println("Received cached command from ${member.effectiveName}")
-			TimingManager.addEvent(TimingManager.Event.interruptEvent(true))
+			TimingManager.addEvent(TimingManager.ScheduledEvent.interruptEvent(true))
 
 		} else if (message == "&&force") {
 			println("Received force command from ${member.effectiveName}")
-			TimingManager.addEvent(TimingManager.Event.interruptEvent(false))
+			TimingManager.addEvent(TimingManager.ScheduledEvent.interruptEvent(false))
 		}
 	}
 
@@ -140,7 +140,7 @@ class Serena(val jda: JDA) : ListenerAdapter() {
 				println("Received reject reaction command from ${member.effectiveName}")
 
 				/* find another message */
-				TimingManager.addEvent(TimingManager.Event.interruptEvent(true))
+				TimingManager.addEvent(TimingManager.ScheduledEvent.interruptEvent(true))
 
 				removeReactions()
 			}

@@ -1,52 +1,38 @@
 package org.balduvian
 
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import kotlin.system.exitProcess
 
-object TimingManager {
-	const val SEND_HOUR = 12
-	const val DAYS_BACK = 30
-
-	fun nextTime(days: Long): LocalDateTime {
-		return LocalDateTime.now().withHour(SEND_HOUR).withMinute(0).withSecond(0).plusDays(days)
+class TimingManager(val dailyEvents: Array<DailyEvent<*>>) {
+	private fun nextTime(days: Long, hour: Int): LocalDateTime {
+		return LocalDateTime.now().withHour(hour).withMinute(0).withSecond(0).plusDays(days)
 	}
 
-	private fun getChannel(id: Long): TextChannel {
-		val channel = BotMain.bot.getChannel(id)
-
-		if (channel == null) {
-			println("Channel of ID $id does not exist")
-			exitProcess(-1)
-		}
-
-		return channel
-	}
-
-	data class Event(val time: LocalDateTime, val daily: Boolean, val cached: Boolean) {
+	data class ScheduledEvent(val time: LocalDateTime, val doesRepeat: Boolean, val dailyEvent: DailyEvent<*>) {
 		companion object {
-			fun dailyEvent(time: LocalDateTime) = Event(time, true, false)
+			fun dailyEvent(time: LocalDateTime, dailyEvent: DailyEvent<*>) = ScheduledEvent(time, true, dailyEvent)
 
-			fun interruptEvent(cached: Boolean) = Event(LocalDateTime.now(), false, cached)
+			fun interruptEvent(dailyEvent: DailyEvent<*>) = ScheduledEvent(LocalDateTime.now(), false, dailyEvent)
 		}
 
 		override fun toString(): String {
-			return "Event (${if (daily) "daily" else "interrupt, ${if (cached) "cached" else "refresh"}"})"
+			return "Event (${if (doesRepeat) "daily" else "interrupt" })"
 		}
 
-		fun withTime(time: LocalDateTime) = Event(time, daily, cached)
+		fun withTime(time: LocalDateTime) = ScheduledEvent(time, doesRepeat, dailyEvent)
 	}
 
-	private val eventQueue = ArrayList<Event>()
+	private val eventQueue = ArrayList<ScheduledEvent>()
 
-	fun addEvent(event: Event) {
+	private fun scheduleEvent(event: ScheduledEvent) {
 		println("Adding $event for ${event.time}")
 		eventQueue.add(event)
 	}
 
 	fun start() {
-		addEvent(Event.dailyEvent(nextTime(0)))
+		dailyEvents.forEach { dailyEvent ->
+			scheduleEvent(ScheduledEvent(nextTime(0, dailyEvent.hour), true, dailyEvent))
+		}
 
 		Thread {
 			while (true) {
@@ -62,27 +48,31 @@ object TimingManager {
 
 					println("Triggered $event")
 
-					val grabChannel = getChannel(BotMain.data.grabChannelID)
-					val stageChannel = getChannel(BotMain.data.stageChannelID)
+					val result = try {
 
-					if (event.daily) {
+					} catch (ex: Throwable) {
+						println("event failed")
+						println()
+					}
+
+					if (event.doesRepeat) {
 						if (BotMain.isDoneToday()) {
 							println("The message has already been sent today, setting next message time 1 day forward")
-							addEvent(Event.dailyEvent(nextTime(1)))
+							scheduleEvent(ScheduledEvent.dailyEvent(nextTime(1)))
 
 						} else {
 							val collection = BotMain.bot.grabRandomMessage(DAYS_BACK, grabChannel, false)
 
 							if (collection.isEmpty()) {
 								println("Daily message could not be retrieved, trying again in 1 minute")
-								addEvent(Event.dailyEvent(LocalDateTime.now().plusMinutes(1)))
+								scheduleEvent(ScheduledEvent.dailyEvent(LocalDateTime.now().plusMinutes(1)))
 
 							} else {
 								println("Staging daily message")
 								BotMain.bot.sendStageMessage(collection, stageChannel)
 
 								/* schedule next daily event */
-								addEvent(Event.dailyEvent(nextTime(1)))
+								scheduleEvent(ScheduledEvent.dailyEvent(nextTime(1)))
 
 								println("Setting sent for today")
 								BotMain.lastDay = LastDay.create()
@@ -94,7 +84,7 @@ object TimingManager {
 
 						if (collection.isEmpty()) {
 							println("Message could not be retrieved, trying again in 1 minute")
-							addEvent(event.withTime(LocalDateTime.now().plusMinutes(1)))
+							scheduleEvent(event.withTime(LocalDateTime.now().plusMinutes(1)))
 
 						} else {
 							println("Staging message")
