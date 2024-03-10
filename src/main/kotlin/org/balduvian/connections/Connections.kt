@@ -4,10 +4,8 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import org.balduvian.Util.unit
-import org.balduvian.Util.void
 import org.balduvian.createStorage
 import java.time.LocalDate
-import java.util.concurrent.CompletableFuture
 import kotlin.io.path.Path
 
 object Connections {
@@ -33,7 +31,7 @@ object Connections {
 		val gameDay = dateFromNumber(game.puzzleNumber)
 		val today = LocalDate.now()
 
-		if (!isCommissionsUser(member)) return
+		if (!isConnectionsUser(member)) return
 
 		val data = ConnectionsData.get()
 
@@ -46,38 +44,29 @@ object Connections {
 
 		if (today != gameDay) return
 
-		getSubmittedSet(message.guild, submitDay.submittedIds).thenAccept { (roleMembers, submittedMembers) ->
-			if (submittedMembers.size == roleMembers.size) {
-				data.completeDay(submitDay)
-				message.channel.sendMessage("all connections submitted today\nyou may now send messages without spoilers").submit()
-			} else {
-				message.channel.sendMessage("${submittedMembers.size} out of ${roleMembers.size} connections submitted").submit()
-			}
-		}.exceptionally { ex ->
-			ex.printStackTrace().void()
+		val (roleMembers, submittedMembers) = getSubmittedSet(message.guild, submitDay.submittedIds)
+
+		if (submittedMembers.size == roleMembers.size) {
+			data.completeDay(submitDay)
+			message.channel.sendMessage("all connections submitted today\nyou may now send messages without spoilers").submit()
+		} else {
+			message.channel.sendMessage("${submittedMembers.size} out of ${roleMembers.size} connections submitted")
+				.submit()
 		}
 	}
 
-	fun getRoleUsers(guild: Guild): CompletableFuture<MutableList<Member>> {
-		val role = guild.getRoleById(config.roleId) ?: return CompletableFuture.failedFuture(Exception("no role"))
-
-		guild.findMembersWithRoles()
-		val future = CompletableFuture<MutableList<Member>>()
-
-		guild.findMembersWithRoles(role).onSuccess { future.complete(it) }.onError { future.completeExceptionally(it) }
-
-		return future
+	private fun getRoleMembers(guild: Guild): List<Member> {
+		return guild.members.filter { member -> member.roles.any { role -> role.idLong == config.roleId } }
 	}
 
-	fun isCommissionsUser(member: Member): Boolean {
+	private fun isConnectionsUser(member: Member): Boolean {
 		return member.roles.any { it.idLong == config.roleId }
 	}
 
 	data class SubmittedSet(val roleMembers: List<Member>, val submittedMembers: List<Member>)
 
-	fun getSubmittedSet(guild: Guild, submittedIds: HashSet<Long>): CompletableFuture<SubmittedSet> {
-		return getRoleUsers(guild).thenApply { roleMembers ->
-			SubmittedSet(roleMembers, roleMembers.filter { submittedIds.contains(it.idLong) })
-		}
+	private fun getSubmittedSet(guild: Guild, submittedIds: HashSet<Long>): SubmittedSet {
+		val roleMembers = getRoleMembers(guild)
+		return SubmittedSet(roleMembers, roleMembers.filter { submittedIds.contains(it.idLong) })
 	}
 }

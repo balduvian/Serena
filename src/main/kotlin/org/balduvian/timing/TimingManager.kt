@@ -1,4 +1,4 @@
-package org.balduvian
+package org.balduvian.timing
 
 import java.time.Duration
 import java.time.LocalDateTime
@@ -30,7 +30,12 @@ class TimingManager {
 		fun withTime(time: LocalDateTime) = ScheduledEvent(time, isDaily, dailyEvent, 0)
 	}
 
+	private val dailyEvents = ArrayList<DailyEvent>()
 	private val eventQueue = ArrayList<ScheduledEvent>()
+
+	fun registerDailyEvent(dailyEvent: DailyEvent) {
+		dailyEvents.add(dailyEvent)
+	}
 
 	private fun getTimeTomorrow(event: ScheduledEvent): LocalDateTime {
 		return event.time.plusDays(1L).withMinute(0).withSecond(0).withHour(event.dailyEvent.hour)
