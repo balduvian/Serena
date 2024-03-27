@@ -1,16 +1,15 @@
 import org.balduvian.Data
 import org.balduvian.LastDay
 import org.balduvian.Serena
+import org.balduvian.db.DB
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import kotlin.system.exitProcess
 
 object BotMain {
-	var data = Data.get() ?: run {
-		println("Could not load data file")
-		exitProcess(-1)
-	}
+	val db = DB.connect()
+	init { db.setup() }
 
 	val token = readToken("./token.txt") ?: run {
 		println("Token file not found")

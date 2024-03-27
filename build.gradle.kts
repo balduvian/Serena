@@ -25,6 +25,7 @@ dependencies {
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation("org.xerial:sqlite-jdbc:3.45.1.0")
 }
 
 tasks.shadowJar {
